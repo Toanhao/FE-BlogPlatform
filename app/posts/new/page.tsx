@@ -1,0 +1,117 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+type CreatePostPayload = {
+  title: string;
+  content: string;
+  image: string;
+};
+
+export default function NewPostPage() {
+  const router = useRouter();
+  const [form, setForm] = useState<CreatePostPayload>({
+    title: "",
+    content: "",
+    image: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!form.title || !form.content) {
+      setError("Vui lòng điền đầy đủ tiêu đề và nội dung");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.replace("/auth/login");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("http://localhost:3001/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Tạo bài viết thất bại");
+      }
+
+      router.push(`/posts/${data.id}`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto max-w-3xl p-6">
+      <h1 className="mb-6 text-3xl font-bold">Tạo bài viết mới</h1>
+
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-xl border bg-white p-5 shadow-sm"
+      >
+        <input
+          name="title"
+          placeholder="Tiêu đề"
+          value={form.title}
+          onChange={handleChange}
+          className="w-full rounded-lg border p-3"
+        />
+
+        <input
+          name="image"
+          placeholder="URL ảnh (không bắt buộc)"
+          value={form.image}
+          onChange={handleChange}
+          className="w-full rounded-lg border p-3"
+        />
+
+        <textarea
+          name="content"
+          placeholder="Nội dung"
+          value={form.content}
+          onChange={handleChange}
+          rows={8}
+          className="w-full rounded-lg border p-3"
+        />
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="rounded-lg bg-slate-900 px-4 py-2 text-white disabled:bg-slate-400"
+        >
+          {loading ? "Đang tạo..." : "Đăng bài"}
+        </button>
+      </form>
+    </div>
+  );
+}
