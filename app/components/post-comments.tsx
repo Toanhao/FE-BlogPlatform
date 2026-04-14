@@ -2,14 +2,8 @@
 
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
-
-type PostComment = {
-  id?: string | number;
-  content: string;
-  author?: {
-    username?: string;
-  };
-};
+import { createComment, PostComment } from "@/lib/api/blog-api";
+import { getStoredUser } from "@/lib/auth-storage";
 
 type PostCommentsProps = {
   postId?: string;
@@ -55,34 +49,15 @@ export default function PostComments({
       return;
     }
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Vui lòng đăng nhập để bình luận");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
-      const res = await fetch("http://localhost:3001/comments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content: trimmed,
-          postId,
-        }),
+      const data = await createComment({
+        content: trimmed,
+        postId,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.message || "Gửi bình luận thất bại");
-      }
-
-      const rawUser = localStorage.getItem("user");
-      const user = rawUser ? JSON.parse(rawUser) : null;
+      const user = getStoredUser();
 
       setLocalComments((prev) => [
         ...prev,
@@ -90,13 +65,18 @@ export default function PostComments({
           id: data?.id,
           content: data?.content ?? trimmed,
           author: {
-            username: user?.name || user?.username || "Bạn",
+            username: user?.name || user?.username || "Ban",
           },
         },
       ]);
       setDraftComment("");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
+      const message = err instanceof Error ? err.message : "Đã có lỗi xảy ra";
+      setError(
+        message.includes("401") || message.includes("Unauthorized")
+          ? "Vui lòng đăng nhập để bình luận"
+          : message,
+      );
     } finally {
       setSubmitting(false);
     }

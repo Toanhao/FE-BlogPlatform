@@ -2,12 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-type CreatePostPayload = {
-  title: string;
-  content: string;
-  image: string;
-};
+import { createPost, CreatePostPayload } from "@/lib/api/blog-api";
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -36,34 +31,19 @@ export default function NewPostPage() {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.replace("/auth/login");
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:3001/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Tạo bài viết thất bại");
-      }
-
+      const data = await createPost(form);
       router.push(`/posts/${data.id}`);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
+      const message = err instanceof Error ? err.message : "Da co loi xay ra";
+      if (message.includes("401") || message.includes("Unauthorized")) {
+        router.replace("/auth/login");
+        return;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }

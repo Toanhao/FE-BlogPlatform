@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { clearAuthSession, getAuthSnapshot } from "@/lib/auth-storage";
 
 const linkBase =
   "rounded-md px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400";
@@ -13,28 +14,6 @@ const navItems = [
   { href: "/posts/new", label: "Tạo bài viết mới" },
 ];
 
-// helper: lấy user từ localStorage
-function getUserFromStorage() {
-  try {
-    const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-// helper: lấy auth state
-function getAuthState() {
-  const token = localStorage.getItem("token");
-
-  const user = getUserFromStorage();
-
-  return {
-    isAuth: !!token,
-    username: user?.name ?? user?.username ?? null,
-  };
-}
-
 export default function MainNav() {
   const pathname = usePathname();
   const router = useRouter();
@@ -44,7 +23,7 @@ export default function MainNav() {
 
   useEffect(() => {
     const syncAuth = () => {
-      const state = getAuthState();
+      const state = getAuthSnapshot();
       setIsAuth(state.isAuth);
       setUsername(state.username);
     };
@@ -64,10 +43,7 @@ export default function MainNav() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    window.dispatchEvent(new Event("auth-changed"));
+    clearAuthSession();
 
     router.push("/auth/login");
   };

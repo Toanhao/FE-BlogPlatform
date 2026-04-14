@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "i1-vnexpress.vnecdn.net",
       },
+      {
+        protocol: "https",
+        hostname: "vnexpress.net"
+      }
     ],
   },
 };

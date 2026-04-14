@@ -2,11 +2,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-type LoginPayload = {
-  email: string;
-  password: string;
-};
+import { login, LoginPayload } from "@/lib/api/blog-api";
+import { saveAuthSession } from "@/lib/auth-storage";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,27 +35,12 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:3001/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      window.dispatchEvent(new Event("auth-changed"));
+      const data = await login(form);
+      saveAuthSession(data.token, data.user);
 
       router.push("/posts");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Dang nhap that bai");
     } finally {
       setLoading(false);
     }

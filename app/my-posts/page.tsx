@@ -4,24 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import PostCard from "@/app/components/post-card";
+import { deletePostById, getUserPosts, PostListItem } from "@/lib/api/blog-api";
+import { getCurrentUserId } from "@/lib/auth-storage";
 
-type Post = {
-  id: string | number;
-  title: string;
-  excerpt?: string;
+type Post = PostListItem & {
+  authorId?: string | number;
   image: string | null;
-  authorId: string | number;
-  author: {
-    username: string;
-  };
-  createdAt: string;
-};
-
-type AuthUser = {
-  id?: string;
-  name?: string;
-  email?: string;
-  role?: string;
 };
 
 export default function MyPostsPage() {
@@ -33,37 +21,22 @@ export default function MyPostsPage() {
   useEffect(() => {
     const fetchMyPosts = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          router.replace("/auth/login");
-          return;
-        }
-
-        const rawUser = localStorage.getItem("user");
-        const user: AuthUser | null = rawUser ? JSON.parse(rawUser) : null;
-        const myUserId = user?.id ? String(user.id) : "";
+        const myUserId = getCurrentUserId();
 
         if (!myUserId) {
           router.replace("/auth/login");
           return;
         }
 
-        const res = await fetch(
-          `http://localhost:3001/users/${myUserId}/posts`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        if (!res.ok) {
-          throw new Error("Lỗi khi tải danh sách bài viết");
-        }
-
-        setPosts(await res.json());
+        const posts = await getUserPosts(myUserId);
+        setPosts(posts as Post[]);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
+        const message = err instanceof Error ? err.message : "Da co loi xay ra";
+        if (message.includes("401") || message.includes("Unauthorized")) {
+          router.replace("/auth/login");
+          return;
+        }
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -73,36 +46,22 @@ export default function MyPostsPage() {
   }, [router]);
 
   const handleDeletePost = async (postId: string | number) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.replace("/auth/login");
-      return;
-    }
-
     const normalizedPostId = String(postId);
 
     try {
       setError(null);
-
-      const res = await fetch(
-        `http://localhost:3001/posts/${normalizedPostId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (!res.ok) {
-        throw new Error("Xóa bài viết thất bại");
-      }
+      await deletePostById(normalizedPostId);
 
       setPosts((prevPosts) =>
         prevPosts.filter((post) => String(post.id) !== normalizedPostId),
       );
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
+      const message = err instanceof Error ? err.message : "Da co loi xay ra";
+      if (message.includes("401") || message.includes("Unauthorized")) {
+        router.replace("/auth/login");
+        return;
+      }
+      setError(message);
     }
   };
 

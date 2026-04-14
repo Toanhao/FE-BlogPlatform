@@ -18,10 +18,17 @@ function formatDate(date: string) {
   return new Date(date).toLocaleDateString("vi-VN");
 }
 
+const isImageLike = (src: string) =>
+  /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i.test(src);
+
 const getSafeSrc = (src?: string) => {
   if (!src) return "/default-image.jpg";
 
-  if (src.startsWith("http") || src.startsWith("/")) {
+  if (src.startsWith("http") && isImageLike(src)) {
+    return src;
+  }
+
+  if (src.startsWith("/") && isImageLike(src)) {
     return src;
   }
 
@@ -67,8 +74,8 @@ export default function PostCard({
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500 sm:text-sm">
-            <span className="font-medium text-slate-600">{authorUsername}</span>
-            <span>{formatDate(createdAt)}</span>
+            <span className="font-medium text-slate-600">Tác giả : {authorUsername}</span>
+            <span>Ngày đăng : {formatDate(createdAt)}</span>
           </div>
         </div>
       </Link>

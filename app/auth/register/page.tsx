@@ -3,11 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-    type RegisterPayload = {
-  username: string
-  email: string
-  password: string
-}
+import { register, RegisterPayload } from "@/lib/api/blog-api"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -40,24 +36,12 @@ export default function RegisterPage() {
     setError(null)
 
     try {
-      const res = await fetch("http://localhost:3001/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(form)
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.message || "Register failed")
-      }
+      await register(form)
 
       router.push("/auth/login")
 
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Dang ky that bai")
     } finally {
       setLoading(false)
     }
