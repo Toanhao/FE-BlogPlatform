@@ -8,6 +8,20 @@ type Post = PostListItem;
 
 const PAGE_SIZE = 4;
 
+function parsePageParam(rawPage?: string): number {
+  if (!rawPage || !/^\d+$/.test(rawPage)) {
+    return 1;
+  }
+
+  const parsed = Number(rawPage);
+
+  if (!Number.isFinite(parsed) || !Number.isSafeInteger(parsed) || parsed < 1) {
+    return 1;
+  }
+
+  return parsed;
+}
+
 async function getPosts(
   page: number,
   keyword: string,
@@ -26,7 +40,7 @@ export default async function PostsPage({
   const { page, q } = await searchParams;
   const keyword = q?.trim() ?? "";
 
-  const requestedPage = Math.max(1, Number(page) || 1);
+  const requestedPage = parsePageParam(page);
 
   let { items: posts, total } = await getPosts(requestedPage, keyword);
 
