@@ -1,6 +1,13 @@
 import Image from "next/image";
 import PostComments from "@/app/components/post-comments";
-import { getPostById, PostDetailData } from "@/lib/api/blog-api";
+import {
+  getPostById,
+  getPostComments,
+  PaginatedCommentsData,
+  PostDetailData,
+} from "@/lib/api/blog-api";
+
+const COMMENT_BATCH_SIZE = 5;
 
 const isImageLike = (src: string) =>
   /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i.test(src);
@@ -18,10 +25,14 @@ const getSafeSrc = (src?: string) => {
 export default async function PostDetail({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const post: PostDetailData = await getPostById(id);
+  const [post, commentsPage]: [PostDetailData, PaginatedCommentsData] =
+    await Promise.all([
+      getPostById(id),
+      getPostComments(id, 0, COMMENT_BATCH_SIZE),
+    ]);
 
   return (
     <div className="mx-auto max-w-4xl p-6">
@@ -46,7 +57,9 @@ export default async function PostDetail({
               Tác giả : {post.author?.username ?? "Người dùng"}
             </span>
             <span className="mx-2">•</span>
-            <span>Ngày đăng : {new Date(post.createdAt).toLocaleDateString("vi-VN")}</span>
+            <span>
+              Ngày đăng : {new Date(post.createdAt).toLocaleDateString("vi-VN")}
+            </span>
           </div>
 
           <div className="prose prose-slate mt-5 max-w-none whitespace-pre-line text-slate-700">
@@ -55,7 +68,11 @@ export default async function PostDetail({
         </div>
       </article>
 
-      <PostComments postId={id} comments={post.comments ?? []} />
+      <PostComments
+        postId={id}
+        comments={commentsPage.items}
+        totalComments={commentsPage.total}
+      />
     </div>
   );
 }

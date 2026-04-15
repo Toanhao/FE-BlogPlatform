@@ -19,11 +19,19 @@ export type CreatePostPayload = {
 };
 
 export type PostComment = {
-  id?: string | number;
+  id: string | number;
   content: string;
+  createdAt?: string;
+  postId?: string;
+  authorId?: string;
   author?: {
     username?: string;
   };
+};
+
+export type PaginatedCommentsData = {
+  items: PostComment[];
+  total: number;
 };
 
 export type PostListItem = {
@@ -44,7 +52,6 @@ export type PostDetailData = {
   author: {
     username: string;
   };
-  comments?: PostComment[];
 };
 
 export async function login(payload: LoginPayload) {
@@ -85,6 +92,25 @@ export async function getPostById(id: string) {
   return res.data;
 }
 
+export async function getPostComments(
+  postId: string,
+  skip: number,
+  limit: number,
+  order: string = "createdAt DESC",
+) {
+  const res = await apiClient.get<PaginatedCommentsData>(
+    `/posts/${postId}/comments`,
+    {
+      params: {
+        skip: String(skip),
+        limit: String(limit),
+        order,
+      },
+    },
+  );
+  return res.data;
+}
+
 export async function getUserPosts(userId: string) {
   const res = await apiClient.get<PostListItem[]>(`/users/${userId}/posts`);
   return res.data;
@@ -107,8 +133,8 @@ export async function createComment(payload: {
   postId: string;
 }) {
   const res = await apiClient.post<{
-    id?: string | number;
-    content?: string;
+    id: string | number;
+    content: string;
   }>("/comments", payload);
   return res.data;
 }
