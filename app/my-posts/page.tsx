@@ -1,117 +1,76 @@
-"use client";
-
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import PostCard from "@/app/components/post-card";
-import { deletePostById, getUserPosts, PostListItem } from "@/lib/api/blog-api";
-import { getCurrentUserId } from "@/lib/auth-storage";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { PostListItem } from "@/lib/api/blog-api";
+import MyPostsClient from "./my-posts-client";
 
 type Post = PostListItem & {
   authorId?: string | number;
   image: string | null;
 };
 
-export default function MyPostsPage() {
-  const router = useRouter();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 
-  useEffect(() => {
-    const fetchMyPosts = async () => {
-      try {
-        const myUserId = getCurrentUserId();
+async function getCurrentUserIdFromApi(token: string): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
 
-        if (!myUserId) {
-          router.replace("/auth/login");
-          return;
-        }
+  if (!response.ok) {
+    throw new Error("Unauthorized");
+  }
 
-        const posts = await getUserPosts(myUserId);
-        setPosts(posts as Post[]);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Da co loi xay ra";
-        if (message.includes("401") || message.includes("Unauthorized")) {
-          router.replace("/auth/login");
-          return;
-        }
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const profile = (await response.json()) as { id?: string | number };
+  const userId = String(profile.id ?? "").trim();
 
-    fetchMyPosts();
-  }, [router]);
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
 
-  const handleDeletePost = async (postId: string | number) => {
-    const normalizedPostId = String(postId);
+  return userId;
+}
 
-    try {
-      setError(null);
-      await deletePostById(normalizedPostId);
+async function getUserPostsFromApi(token: string, userId: string): Promise<Post[]> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/posts`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
 
-      setPosts((prevPosts) =>
-        prevPosts.filter((post) => String(post.id) !== normalizedPostId),
-      );
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Da co loi xay ra";
-      if (message.includes("401") || message.includes("Unauthorized")) {
-        router.replace("/auth/login");
-        return;
-      }
-      setError(message);
-    }
-  };
+  if (!response.ok) {
+    throw new Error("Failed to fetch posts");
+  }
+
+  return (await response.json()) as Post[];
+}
+
+export default async function MyPostsPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
+  if (!token) {
+    redirect("/auth/login");
+  }
+
+  let posts: Post[] = [];
+
+  try {
+    const myUserId = await getCurrentUserIdFromApi(token);
+    posts = await getUserPostsFromApi(token, myUserId);
+  } catch {
+    redirect("/auth/login");
+  }
 
   return (
     <div className="mx-auto max-w-4xl p-6">
       <h1 className="mb-6 text-3xl font-bold">Bài viết của tôi </h1>
-
-      {loading && <p>Đang tải...</p>}
-
-      {!loading && error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && posts.length === 0 && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 text-slate-600">
-          Bạn chưa có bài viết nào. Hãy tạo bài viết mới tại{" "}
-          <Link href="/posts/new" className="text-blue-600 hover:underline">
-            đây
-          </Link>
-        </div>
-      )}
-
-      <div className="mx-auto max-w-5xl p-6">
-        <div className="space-y-5">
-          {posts.map((p) => {
-            return (
-              <PostCard
-                key={p.id}
-                href={`/posts/${p.id}`}
-                title={p.title}
-                previewText={p.excerpt ?? ""}
-                image={p.image}
-                authorUsername={p.author?.username ?? "Bạn"}
-                createdAt={p.createdAt}
-                actions={
-                  <button
-                    type="button"
-                    onClick={() => void handleDeletePost(p.id)}
-                    className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-red-700"
-                  >
-                    Xóa
-                  </button>
-                }
-              />
-            );
-          })}
-        </div>
-      </div>
+      <MyPostsClient initialPosts={posts} />
     </div>
   );
 }

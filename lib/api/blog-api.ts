@@ -62,6 +62,10 @@ export async function login(payload: LoginPayload) {
   return res.data;
 }
 
+export async function logout() {
+  await apiClient.post("/auth/logout");
+}
+
 export async function register(payload: RegisterPayload) {
   const res = await apiClient.post<StoredUser>("/auth/register", payload);
   return res.data;
@@ -108,7 +112,8 @@ export async function getPostComments(
       },
     },
   );
-  return res.data;
+  console.log("Fetched comments for post", postId, ":", res.data);
+  return res.data
 }
 
 export async function getUserPosts(userId: string) {
@@ -121,10 +126,7 @@ export async function deletePostById(postId: string) {
 }
 
 export async function createPost(payload: CreatePostPayload) {
-  const res = await apiClient.post<{ id: string | number }>(
-    "/posts",
-    payload,
-  );
+  const res = await apiClient.post<{ id: string | number }>("/posts", payload);
   return res.data;
 }
 

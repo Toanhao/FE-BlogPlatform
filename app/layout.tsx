@@ -1,5 +1,5 @@
-import "./globals.css"
-import MainNav from "./components/main-nav"
+import "./globals.css";
+import MainNavWrapper from "./components/main-nav-wrapper";
 
 export default function RootLayout({
   children,
@@ -9,9 +9,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-slate-50 text-slate-900">
-        <MainNav />
+        <MainNavWrapper />
         <main>{children}</main>
       </body>
     </html>
-  )
+  );
 }

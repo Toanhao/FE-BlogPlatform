@@ -28,12 +28,19 @@ export default async function PostDetail({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [post, commentsPage]: [PostDetailData, PaginatedCommentsData] =
-    await Promise.all([
-      getPostById(id),
-      getPostComments(id, 0, COMMENT_BATCH_SIZE),
-    ]);
-
+  // const [post, commentsPage]: [PostDetailData, PaginatedCommentsData] =
+  //   await Promise.all([
+  //     getPostById(id),
+  //     getPostComments(id, 0, COMMENT_BATCH_SIZE),
+  //   ]);
+  const post: PostDetailData = await getPostById(id);
+  const commentsPage: PaginatedCommentsData = await getPostComments(
+    id,
+    0,
+    COMMENT_BATCH_SIZE,
+  );
+  console.log("Post detail data:", post);
+  console.log("Initial comments page:", commentsPage);
   return (
     <div className="mx-auto max-w-4xl p-6">
       <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

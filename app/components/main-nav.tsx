@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { clearAuthSession, getAuthSnapshot } from "@/lib/auth-storage";
+import { clearAuthSession } from "@/lib/auth-storage";
+import { logout as logoutApi } from "@/lib/api/blog-api";
 
 const linkBase =
   "rounded-md px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400";
@@ -14,38 +14,28 @@ const navItems = [
   { href: "/posts/new", label: "Tạo bài viết mới" },
 ];
 
-export default function MainNav() {
+type MainNavProps = {
+  isAuth: boolean;
+  username: string | null;
+};
+
+export default function MainNav({ isAuth, username }: MainNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-
-  const [isAuth, setIsAuth] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
-
-  useEffect(() => {
-    const syncAuth = () => {
-      const state = getAuthSnapshot();
-      setIsAuth(state.isAuth);
-      setUsername(state.username);
-    };
-
-    syncAuth();
-
-    window.addEventListener("storage", syncAuth);
-    window.addEventListener("auth-changed", syncAuth);
-
-    return () => {
-      window.removeEventListener("storage", syncAuth);
-      window.removeEventListener("auth-changed", syncAuth);
-    };
-  }, []);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
-  const logout = () => {
-    clearAuthSession();
+  const logout = async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // Intentionally continue local cleanup even when API call fails.
+    }
 
-    router.push("/auth/login");
+    clearAuthSession();
+    router.replace("/auth/login");
+    router.refresh();
   };
 
   return (
@@ -82,7 +72,7 @@ export default function MainNav() {
               </span>
 
               <button
-                onClick={logout}
+                onClick={() => void logout()}
                 className={`${linkBase} border text-slate-700 hover:bg-slate-100`}
               >
                 Đăng xuất

@@ -36,9 +36,10 @@ export default function LoginPage() {
 
     try {
       const data = await login(form);
-      saveAuthSession(data.token, data.user);
+      saveAuthSession(data.user);
 
-      router.push("/posts");
+      router.replace("/posts");
+      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Dang nhap that bai");
     } finally {
