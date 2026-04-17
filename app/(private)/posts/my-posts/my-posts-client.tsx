@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import PostCard from "@/app/components/post-card";
-import { PostListItem } from "@/lib/api/blog-api";
+import { useRouter } from "next/navigation";
+import PostCard from "../../../components/post-card";
+import { PostListItem } from "../../../lib/api/blog-api";
 import { deleteMyPostAction } from "./actions";
 
 type Post = PostListItem & {
@@ -18,21 +19,21 @@ type MyPostsClientProps = {
 export default function MyPostsClient({ initialPosts }: MyPostsClientProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleDeletePost = async (postId: string | number) => {
     const normalizedPostId = String(postId);
-
     try {
       setError(null);
       const result = await deleteMyPostAction(normalizedPostId);
-
       if (!result.ok) {
         throw new Error(result.error ?? "Da co loi xay ra");
       }
-
       setPosts((prevPosts) =>
         prevPosts.filter((post) => String(post.id) !== normalizedPostId),
       );
+      // Always refresh to sync with server state
+      router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Da co loi xay ra";
       setError(message);

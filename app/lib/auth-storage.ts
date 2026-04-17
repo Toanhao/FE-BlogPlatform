@@ -1,6 +1,5 @@
 export type StoredUser = {
   id?: string | number;
-  _id?: string | number;
   name?: string;
   username?: string;
   email?: string;

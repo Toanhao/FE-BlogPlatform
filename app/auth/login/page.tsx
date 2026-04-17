@@ -2,8 +2,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login, LoginPayload } from "@/lib/api/blog-api";
-import { saveAuthSession } from "@/lib/auth-storage";
+import { login, LoginPayload } from "@/app/lib/api/blog-api";
+import { saveAuthSession } from "@/app/lib/auth-storage";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,7 +38,7 @@ export default function LoginPage() {
       const data = await login(form);
       saveAuthSession(data.user);
 
-      router.replace("/posts");
+      router.replace("/posts/my-posts");
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Dang nhap that bai");

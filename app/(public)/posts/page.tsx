@@ -1,12 +1,13 @@
 import Link from "next/link";
-import PostCard from "@/app/components/post-card";
-import { getPaginatedPosts, PostListItem } from "@/lib/api/blog-api";
-
-export const dynamic = "force-dynamic";
+import PostCard from "../../components/post-card";
+import { PostListItem } from "../../lib/api/blog-api";
+import { serverApiFetch } from "../../lib/api/server-api-client";
 
 type Post = PostListItem;
 
 const PAGE_SIZE = 4;
+const POSTS_REVALIDATE_SECONDS = 60;
+const POSTS_LIST_TAG = "posts:list";
 
 function parsePageParam(rawPage?: string): number {
   if (!rawPage || !/^\d+$/.test(rawPage)) {
@@ -29,7 +30,19 @@ async function getPosts(
   items: Post[];
   total: number;
 }> {
-  return getPaginatedPosts(page, keyword, PAGE_SIZE);
+  const skip = (page - 1) * PAGE_SIZE;
+  return serverApiFetch<{ items: Post[]; total: number }>("/posts/paginated", {
+    params: {
+      skip: String(skip),
+      limit: String(PAGE_SIZE),
+      order: "createdAt DESC",
+      ...(keyword ? { q: keyword } : {}),
+    },
+    next: {
+      revalidate: POSTS_REVALIDATE_SECONDS,
+      tags: [POSTS_LIST_TAG],
+    },
+  });
 }
 
 export default async function PostsPage({

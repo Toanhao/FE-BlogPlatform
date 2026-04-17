@@ -1,11 +1,10 @@
 import Image from "next/image";
-import PostComments from "@/app/components/post-comments";
+import PostComments from "./components/post-comments";
 import {
-  getPostById,
-  getPostComments,
   PaginatedCommentsData,
   PostDetailData,
-} from "@/lib/api/blog-api";
+} from "../../../lib/api/blog-api";
+import { serverApiFetch } from "../../../lib/api/server-api-client";
 
 const COMMENT_BATCH_SIZE = 5;
 
@@ -33,14 +32,27 @@ export default async function PostDetail({
   //     getPostById(id),
   //     getPostComments(id, 0, COMMENT_BATCH_SIZE),
   //   ]);
-  const post: PostDetailData = await getPostById(id);
-  const commentsPage: PaginatedCommentsData = await getPostComments(
-    id,
-    0,
-    COMMENT_BATCH_SIZE,
+  const post: PostDetailData = await serverApiFetch<PostDetailData>(
+    `/posts/${id}`,
+    {
+      next: {
+        revalidate: 60,
+        tags: ["post:detail", `post:${id}`],
+      },
+    },
   );
-  console.log("Post detail data:", post);
-  console.log("Initial comments page:", commentsPage);
+  const commentsPage: PaginatedCommentsData =
+    await serverApiFetch<PaginatedCommentsData>(`/posts/${id}/comments`, {
+      params: {
+        skip: 0,
+        limit: COMMENT_BATCH_SIZE,
+        order: "createdAt DESC",
+      },
+      next: {
+        revalidate: 60,
+        tags: [`post:${id}:comments`],
+      },
+    });
   return (
     <div className="mx-auto max-w-4xl p-6">
       <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

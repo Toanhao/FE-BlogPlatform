@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createPost, CreatePostPayload } from "@/lib/api/blog-api";
+import { CreatePostPayload } from "../../../lib/api/blog-api";
+import { createPostAction } from "./actions";
 
 export default function NewPostForm() {
   const router = useRouter();
@@ -35,8 +36,8 @@ export default function NewPostForm() {
     setError(null);
 
     try {
-      const data = await createPost(form);
-      router.push(`/posts/${data.id}`);
+      await createPostAction(form);
+      router.push("/posts/my-posts");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Da co loi xay ra";
       if (message.includes("401") || message.includes("Unauthorized")) {

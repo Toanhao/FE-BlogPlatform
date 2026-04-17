@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { createComment, getPostComments, PostComment } from "@/lib/api/blog-api";
-import { getStoredUser } from "@/lib/auth-storage";
-import { CommentItem } from "./comment-item";
+import { getPostComments, PostComment } from "@/app/lib/api/blog-api";
+import { createCommentAction } from "../actions/create.comment";
+import { getStoredUser } from "@/app/lib/auth-storage";
+import { CommentItem } from "../components/comment-item";
 const COMMENT_BATCH_SIZE = 5;
 
 type PostCommentsProps = {
@@ -41,14 +42,12 @@ export default function PostComments({
     setSubmitting(true);
 
     try {
-      const data = await createComment({
+      const data = await createCommentAction({
         content: trimmed,
         postId,
       });
-
       const user = getStoredUser();
       const createdCommentId = data?.id ?? `local-${Date.now()}`;
-
       setLocalComments((prev) => [
         {
           id: createdCommentId,
@@ -150,7 +149,7 @@ export default function PostComments({
             alt="Avatar default"
             width={36}
             height={36}
-            className="h-9 w-9 flex-shrink-0 rounded-full"
+            className="h-9 w-auto flex-shrink-0 rounded-full"
           />
 
           <textarea

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { register, RegisterPayload } from "@/lib/api/blog-api"
+import { register, RegisterPayload } from "@/app/lib/api/blog-api"
 
 export default function RegisterPage() {
   const router = useRouter()

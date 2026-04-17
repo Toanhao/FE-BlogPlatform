@@ -55,7 +55,7 @@ export default function PostCard({
               alt={title}
               width={240}
               height={176}
-              className="h-full w-full object-cover"
+              className="h-auto w-full object-cover"
             />
           </div>
         )}
@@ -72,7 +72,9 @@ export default function PostCard({
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500 sm:text-sm">
-            <span className="font-medium text-slate-600">Tác giả : {authorUsername}</span>
+            <span className="font-medium text-slate-600">
+              Tác giả : {authorUsername}
+            </span>
             <span>Ngày đăng : {formatDate(createdAt)}</span>
           </div>
         </div>

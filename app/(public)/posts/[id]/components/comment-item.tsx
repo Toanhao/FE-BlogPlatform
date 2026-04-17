@@ -1,4 +1,4 @@
-import { PostComment } from "@/lib/api/blog-api";
+import { PostComment } from "@/app/lib/api/blog-api";
 import Image from "next/image";
 
 type CommentItemProps = {

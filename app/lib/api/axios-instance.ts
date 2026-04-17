@@ -16,11 +16,16 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Nếu 401, có thể log out hoặc refresh token
     if (error.response?.status === 401) {
-      // TODO: Trigger logout action hoặc refresh token
+      // TODO: logout hoặc refresh token
     }
-    return Promise.reject(error);
+
+    const message =
+      error.response?.data?.error?.message ||
+      error.response?.data?.message ||
+      "Đã có lỗi xảy ra, thử lại sau.";
+
+    return Promise.reject(new Error(message));
   },
 );
 

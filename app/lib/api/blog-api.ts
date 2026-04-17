@@ -1,5 +1,5 @@
-import { apiClient } from "@/lib/api/axios-instance";
-import { StoredUser } from "@/lib/auth-storage";
+import { apiClient } from "@/app/lib/api/axios-instance";
+import { StoredUser } from "@/app/lib/auth-storage";
 
 export type LoginPayload = {
   email: string;
@@ -112,8 +112,7 @@ export async function getPostComments(
       },
     },
   );
-  console.log("Fetched comments for post", postId, ":", res.data);
-  return res.data
+  return res.data;
 }
 
 export async function getUserPosts(userId: string) {
