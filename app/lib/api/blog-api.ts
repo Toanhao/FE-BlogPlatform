@@ -55,7 +55,7 @@ export type PostDetailData = {
 };
 
 export async function login(payload: LoginPayload) {
-  const res = await apiClient.post<{ token: string; user: StoredUser }>(
+  const res = await apiClient.post<{ user: StoredUser }>(
     "/auth/login",
     payload,
   );

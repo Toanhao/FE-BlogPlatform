@@ -10,10 +10,10 @@ type Post = PostListItem & {
 };
 
 async function getCurrentUserIdFromApi(token: string): Promise<string> {
-  const res = await apiClient.get<{ id?: string | number }>("/auth/me", {
+  const res = await apiClient.get<{ user: { id?: string | number } }>("/auth/me", {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const userId = String(res.data.id ?? "").trim();
+  const userId = String(res.data.user?.id ?? "").trim();
   if (!userId) throw new Error("Unauthorized");
   return userId;
 }

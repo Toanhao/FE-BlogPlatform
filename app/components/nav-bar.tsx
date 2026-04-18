@@ -1,4 +1,7 @@
+
+"use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import UserInfoClient from "./user-info-client";
 
 const linkBase =
@@ -11,6 +14,7 @@ const navItems = [
 ];
 
 export default function NavBar() {
+  const pathname = usePathname();
   return (
     <header className="border-b bg-white">
       <nav className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4">
@@ -20,15 +24,20 @@ export default function NavBar() {
         </Link>
         {/* NAV ITEMS */}
         <div className="flex gap-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={linkBase}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || (item.href !== "/posts" && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={
+                  linkBase + (isActive ? " bg-blue-100 text-black-700 font-semibold" : " text-slate-700 hover:bg-slate-100")
+                }
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
         {/* AUTH SECTION */}
         <div className="ml-auto flex items-center gap-3">

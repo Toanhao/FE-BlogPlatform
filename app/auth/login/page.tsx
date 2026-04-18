@@ -38,7 +38,11 @@ export default function LoginPage() {
       const data = await login(form);
       saveAuthSession(data.user);
 
-      router.replace("/posts/my-posts");
+      if (data.user.role === "admin") {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/posts/my-posts");
+      }
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Dang nhap that bai");
