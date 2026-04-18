@@ -40,6 +40,7 @@ export default function PostCard({
   authorUsername,
   createdAt,
   image,
+  actions,
 }: PostCardProps) {
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -78,7 +79,11 @@ export default function PostCard({
           </div>
         </div>
       </Link>
-
+      {actions && (
+        <div className="flex items-center justify-end border-t border-slate-100 bg-slate-50 px-4 py-3">
+          {actions}
+        </div>
+      )}
     </article>
   );
 }

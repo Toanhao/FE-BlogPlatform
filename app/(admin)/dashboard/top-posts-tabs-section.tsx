@@ -1,93 +1,62 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react';
-import PostCard from '../../components/post-card';
+import React, { useState, useEffect } from "react";
+import PostCard from "../../components/post-card";
+import { serverApiFetch } from "@/app/lib/api/server-api-client";
 
-type TabType = 'today' | 'week' | 'all';
+type TabType = "today" | "week" | "all";
 
 const TABS: { label: string; value: TabType }[] = [
-  { label: 'Hôm nay', value: 'today' },
-  { label: 'Tuần qua', value: 'week' },
-  { label: 'Tất cả', value: 'all' },
+  { label: "Hôm nay", value: "today" },
+  { label: "Tuần qua", value: "week" },
+  { label: "Tất cả", value: "all" },
 ];
-
 
 type Post = {
   id: string;
+  name: string;
   title: string;
-  previewText: string;
-  authorUsername: string;
+  excerpt: string;
   createdAt: string;
   image?: string | null;
-  comments: number;
+  authorId: string;
 };
 
-const mockPosts: Record<TabType, Post[]> = {
-  today: [
-    {
-      id: '1',
-      title: 'Post Today 1',
-      previewText: 'Đây là tóm tắt ngắn cho bài viết hôm nay số 1.',
-      authorUsername: 'User A',
-      createdAt: '2026-04-18',
-      image: '/sample1.jpg',
-      comments: 5,
-    },
-    {
-      id: '2',
-      title: 'Post Today 2',
-      previewText: 'Đây là tóm tắt ngắn cho bài viết hôm nay số 2.',
-      authorUsername: 'User B',
-      createdAt: '2026-04-18',
-      image: '/sample2.jpg',
-      comments: 3,
-    },
-  ],
-  week: [
-    {
-      id: '3',
-      title: 'Post Week 1',
-      previewText: 'Tóm tắt bài viết nổi bật trong tuần qua.',
-      authorUsername: 'User C',
-      createdAt: '2026-04-15',
-      image: '/sample3.jpg',
-      comments: 12,
-    },
-    {
-      id: '4',
-      title: 'Post Week 2',
-      previewText: 'Một bài viết khác trong tuần qua.',
-      authorUsername: 'User D',
-      createdAt: '2026-04-14',
-      image: '/sample4.jpg',
-      comments: 8,
-    },
-  ],
-  all: [
-    {
-      id: '5',
-      title: 'Post All 1',
-      previewText: 'Bài viết có nhiều bình luận nhất mọi thời đại.',
-      authorUsername: 'User E',
-      createdAt: '2026-03-10',
-      image: '/sample5.jpg',
-      comments: 30,
-    },
-    {
-      id: '6',
-      title: 'Post All 2',
-      previewText: 'Bài viết nổi bật khác.',
-      authorUsername: 'User F',
-      createdAt: '2026-02-20',
-      image: '/sample6.jpg',
-      comments: 25,
-    },
-  ],
-};
+const TopPostsTabsSection = () => {
+  const [tab, setTab] = useState<TabType>("today");
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export default function TopPostsTabsSection() {
-  const [tab, setTab] = useState<TabType>('today');
-  const posts = mockPosts[tab];
+  useEffect(() => {
+    let ignore = false;
+    async function fetchPosts() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await serverApiFetch<any[]>("/admin/statistics/top-posts");
+        // Map lại để có name lấy từ author.username
+        const mapped: Post[] = data.map((item) => ({
+          id: item.id,
+          title: item.title,
+          excerpt: item.excerpt,
+          createdAt: item.createdAt,
+          image: item.image,
+          authorId: item.authorId,
+          name: item.author?.username || ""
+        }));
+        if (!ignore) setPosts(mapped);
+      } catch (e: any) {
+        if (!ignore) setError(e?.message || "Lỗi tải dữ liệu");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    fetchPosts();
+    return () => {
+      ignore = true;
+    };
+  }, [tab]);
 
   return (
     <section className="bg-white rounded-xl shadow p-6 flex-1 min-w-0">
@@ -100,8 +69,8 @@ export default function TopPostsTabsSection() {
               onClick={() => setTab(t.value)}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                 tab === t.value
-                  ? 'bg-[#49a4f0] text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? "bg-[#49a4f0] text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               {t.label}
@@ -110,13 +79,16 @@ export default function TopPostsTabsSection() {
         </div>
       </div>
       <div className="space-y-4">
-        {posts.map((post) => (
+        {loading && <div>Đang tải...</div>}
+        {error && <div className="text-red-500">{error}</div>}
+        {!loading && !error && posts.length === 0 && <div>Không có bài viết nào.</div>}
+        {!loading && !error && posts.map((post) => (
           <div key={post.id} className="relative">
             <PostCard
               href={`/posts/${post.id}`}
               title={post.title}
-              previewText={post.previewText}
-              authorUsername={post.authorUsername}
+              previewText={post.excerpt}
+              authorUsername={post.name}
               createdAt={post.createdAt}
               image={post.image}
             />
@@ -125,4 +97,6 @@ export default function TopPostsTabsSection() {
       </div>
     </section>
   );
-}
+};
+
+export default TopPostsTabsSection;
