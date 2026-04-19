@@ -14,12 +14,14 @@ const TABS: { label: string; value: TabType }[] = [
 
 type Post = {
   id: string;
-  name: string;
   title: string;
   excerpt: string;
   createdAt: string;
   image?: string | null;
   authorId: string;
+  author: {
+    username: string;
+  };
   commentCount?: number;
 };
 
@@ -35,21 +37,24 @@ const TopPostsTabsSection = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await serverApiFetch<any[]>("/admin/statistics/top-posts");
+        const data = await serverApiFetch<Post[]>(
+          "/admin/statistics/top-posts",
+        );
         // Map lại để có name lấy từ author.username
         const mapped: Post[] = data.map((item) => ({
           id: item.id,
           title: item.title,
           excerpt: item.excerpt,
           createdAt: item.createdAt,
+          author: item.author,
           image: item.image,
           authorId: item.authorId,
-          name: item.author?.username || "",
-          commentCount: item.commentCount
+          commentCount: item.commentCount,
         }));
         if (!ignore) setPosts(mapped);
-      } catch (e: any) {
-        if (!ignore) setError(e?.message || "Lỗi tải dữ liệu");
+      } catch (e: unknown) {
+        if (!ignore)
+          setError((e as { message?: string })?.message || "Lỗi tải dữ liệu");
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -83,20 +88,24 @@ const TopPostsTabsSection = () => {
       <div className="space-y-4">
         {loading && <div>Đang tải...</div>}
         {error && <div className="text-red-500">{error}</div>}
-        {!loading && !error && posts.length === 0 && <div>Không có bài viết nào.</div>}
-        {!loading && !error && posts.map((post) => (
-          <div key={post.id} className="relative">
-            <PostCard
-              href={`/posts/${post.id}`}
-              title={post.title}
-              previewText={post.excerpt}
-              authorUsername={post.name}
-              createdAt={post.createdAt}
-              image={post.image}
-              commentCount={post.commentCount}
-            />
-          </div>
-        ))}
+        {!loading && !error && posts.length === 0 && (
+          <div>Không có bài viết nào.</div>
+        )}
+        {!loading &&
+          !error &&
+          posts.map((post) => (
+            <div key={post.id} className="relative">
+              <PostCard
+                href={`/posts/${post.id}`}
+                title={post.title}
+                previewText={post.excerpt}
+                authorUsername={post.author.username}
+                createdAt={post.createdAt}
+                image={post.image}
+                commentCount={post.commentCount}
+              />
+            </div>
+          ))}
       </div>
     </section>
   );
