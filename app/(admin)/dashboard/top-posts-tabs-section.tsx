@@ -20,6 +20,7 @@ type Post = {
   createdAt: string;
   image?: string | null;
   authorId: string;
+  commentCount?: number;
 };
 
 const TopPostsTabsSection = () => {
@@ -43,7 +44,8 @@ const TopPostsTabsSection = () => {
           createdAt: item.createdAt,
           image: item.image,
           authorId: item.authorId,
-          name: item.author?.username || ""
+          name: item.author?.username || "",
+          commentCount: item.commentCount
         }));
         if (!ignore) setPosts(mapped);
       } catch (e: any) {
@@ -91,6 +93,7 @@ const TopPostsTabsSection = () => {
               authorUsername={post.name}
               createdAt={post.createdAt}
               image={post.image}
+              commentCount={post.commentCount}
             />
           </div>
         ))}

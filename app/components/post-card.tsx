@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ReactNode } from "react";
+import Icon from "./shared/Icon";
 
 type PostCardProps = {
   href: string;
@@ -10,6 +11,7 @@ type PostCardProps = {
   createdAt: string;
   image?: string | null;
   actions?: ReactNode;
+  commentCount?: number;
 };
 
 function formatDate(date: string) {
@@ -41,6 +43,7 @@ export default function PostCard({
   createdAt,
   image,
   actions,
+  commentCount,
 }: PostCardProps) {
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -71,11 +74,18 @@ export default function PostCard({
             </p>
           </div>
 
-          <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500 sm:text-sm">
-            <span className="font-medium text-slate-600">
-              Tác giả : {authorUsername}
+          <div className="mt-4 flex items-center border-t border-slate-100 pt-3 text-xs text-slate-500 sm:text-sm">
+            <span className="font-medium text-slate-600 mr-2">
+              Tác giả: {authorUsername}
             </span>
-            <span>Ngày đăng : {formatDate(createdAt)}</span>
+            <div className="flex-1" />
+              {typeof commentCount === 'number' && (
+                <span className="flex items-center gap-1 text-slate-500 font-semibold mr-4">
+                  <Icon name="FaRegCommentDots" size={16} color="#64748b" />
+                  {commentCount} bình luận
+                </span>
+              )}
+            <span className="text-slate-500">{formatDate(createdAt)}</span>
           </div>
         </div>
       </Link>
