@@ -1,4 +1,5 @@
 "use client";
+
 import {
   LineChart,
   Line,
@@ -8,28 +9,54 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {useEffect, useState} from "react";
 
-const userData = [
-  { date: "12/4", users: 2 },
-  { date: "13/4", users: 4 },
-  { date: "14/4", users: 1 },
-  { date: "15/4", users: 5 },
-  { date: "16/4", users: 3 },
-  { date: "17/4", users: 6 },
-  { date: "18/4", users: 2 },
-];
+import {apiClient} from "@/app/lib/api/axios-instance";
 
-const postData = [
-  { date: "12/4", posts: 10 },
-  { date: "13/4", posts: 8 },
-  { date: "14/4", posts: 12 },
-  { date: "15/4", posts: 7 },
-  { date: "16/4", posts: 15 },
-  { date: "17/4", posts: 9 },
-  { date: "18/4", posts: 11 },
-];
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return `${d.getDate()}/${d.getMonth() + 1}`;
+}
+
 
 export default function ChartsSection() {
+  const [userData, setUserData] = useState<{date: string; users: number}[]>([]);
+  const [postData, setPostData] = useState<{date: string; posts: number}[]>([]);
+
+
+  useEffect(() => {
+    apiClient
+      .get<{date: string; userCount: number}[]>("/admin/statistics/user-daily")
+      .then(res => {
+        const data = res.data;
+        setUserData(
+          data.map(item => ({
+            date: formatDate(item.date),
+            users: item.userCount,
+          }))
+        );
+      })
+      .catch(err => {
+        console.error("[UserDaily API] error:", err);
+      });
+
+    apiClient
+      .get<{date: string; postCount: number}[]>("/admin/statistics/post-daily")
+      .then(res => {
+        const data = res.data;
+        setPostData(
+          data.map(item => ({
+            date: formatDate(item.date),
+            posts: item.postCount,
+          }))
+        );
+      })
+      .catch(err => {
+        console.error("[PostDaily API] error:", err);
+      });
+  }, []);
+
+  // ...existing code for postData and Post Creation Trend...
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div className="bg-white rounded-xl shadow p-6 min-h-[260px] flex flex-col">
@@ -57,6 +84,7 @@ export default function ChartsSection() {
           </ResponsiveContainer>
         </div>
       </div>
+      {/* ...existing code for Post Creation Trend... */}
       <div className="bg-white rounded-xl shadow p-6 min-h-[260px] flex flex-col">
         <div className="text-lg font-semibold mb-2">Post Creation Trend</div>
         <div className="flex-1 flex items-center justify-center">
